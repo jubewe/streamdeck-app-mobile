@@ -17,21 +17,24 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF057EFF),
+    primary = Color(0xFF4BA2FF),
     secondary = Color(0xFF69ABF1),
     tertiary = Color(0xFF69D1F1),
     background = Color.Black,
     onSecondary = Color.DarkGray,
-    tertiaryContainer = Color(0xFF1D242E)
+    tertiaryContainer = Color(0xFF1D242E),
+    onSecondaryContainer = Color(0xFF6594A7)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF0060C7),
+    primary = Color(0xFF7ABAFF),
     secondary = Color(0xFF003B79),
     tertiary = Color(0xFF276477),
     background = Color.White,
     onSecondary = Color.LightGray,
-    tertiaryContainer = Color(0xFF485669)
+    tertiaryContainer = Color(0xFF485669),
+    onSecondaryContainer = Color(0xFF6594A7),
+
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),
@@ -63,8 +66,8 @@ fun StreamdeckTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 

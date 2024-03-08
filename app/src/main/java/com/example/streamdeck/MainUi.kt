@@ -1,6 +1,7 @@
 package com.example.streamdeck
 
 import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,19 +16,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Divider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,20 +43,32 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.streamdeck.ble.configCharacteristic
+import com.example.streamdeck.ble.disconnectDevice
+import com.example.streamdeck.ble.startBLEScan
+import com.example.streamdeck.ble.writeCharacteristic
 import com.example.streamdeck.ui.theme.StreamdeckTheme
 
 var showKeyDialogId: Int? by mutableStateOf(null)
-
+var selectedPage by mutableIntStateOf(0)
+const val supportedPages = 3
 var connected by mutableStateOf(false)
 var scanning by mutableStateOf(false)
+var connecting by mutableStateOf(false)
 var showNotInConfigModeDialog by mutableStateOf(false)
+var infoString by mutableStateOf("---")
+var infoStringId by mutableIntStateOf(-1)
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainUi() {
     Column {
-
+        TabRow(selectedTabIndex = selectedPage, tabs = {
+            for(page in 0..<supportedPages){
+                Tab(selectedPage == page, onClick = {selectedPage = page}){
+                    Text(stringResource(id = R.string.tab_title, page+1), Modifier.padding(vertical = 12.dp))
+                }
+            }
+        })
         Card(
             Modifier
                 .width(400.dp)
@@ -125,9 +141,16 @@ fun MainUi() {
                                         .weight(1f)
                                         .padding(2.dp)
                                         .clickable {
-                                            showKeyDialogId = keyId
-                                        }, colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.tertiary
+                                            if (connected) {
+                                                showKeyDialogId = keyId
+                                            }
+                                        },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (connected) {
+                                            MaterialTheme.colorScheme.tertiary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSecondaryContainer
+                                        }
                                     )
                                 ) {
                                     Box(
@@ -143,39 +166,84 @@ fun MainUi() {
                 }
             }
         }
-        if (scanning) {
-            LinearProgressIndicator(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(CircleShape)
-                    .padding(8.dp)
-            )
+
+        Divider(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+        AnimatedContent(targetState = (scanning || connecting), label = "") { progressIndicator ->
+            if (progressIndicator) {
+                LinearProgressIndicator(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(CircleShape)
+                        .padding(8.dp)
+                )
+            } else {
+                AnimatedContent(targetState = connected, label = "") { connected ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (connected) {
+                            Button(onClick = { disconnectDevice() }) {
+                                Text(stringResource(id = R.string.connected))
+                            }
+                        } else {
+                            Text(stringResource(id = R.string.not_connected))
+                            Button(onClick = { startBLEScan() }) {
+                                Text(stringResource(id = R.string.search))
+                            }
+                        }
+                    }
+                }
+            }
         }
         if (showKeyDialogId != null) {
+            infoString = ""
+            writeCharacteristic(configCharacteristic, "g,${showKeyDialogId!! + selectedPage*15}")
+            var enableHold by remember { mutableStateOf(false) }
+            var showLengthWarning by remember {mutableStateOf(false)}
+            val maxStringLength = 10
             AlertDialog(
                 onDismissRequest = { showKeyDialogId = null },
                 title = {
-                    Text(stringResource(id = R.string.modify_key, showKeyDialogId!!+1))
+                    Text(stringResource(id = R.string.modify_key, showKeyDialogId!! + 1, selectedPage + 1))
                 },
                 text = {
                     Column {
-                        var string by remember { mutableStateOf("-") }
-                        var enableHold by remember { mutableStateOf(false) }
-                        OutlinedTextField(value = string,
-                            label = { Text("test") },
+
+                        OutlinedTextField(value = infoString,
+                            label = { Text(stringResource(id = R.string.title)) },
+                            maxLines = 1,
                             onValueChange = { s ->
-                                Log.e("test", s)
-                                string = s.filter { it != ',' }
+                                if(s.length <= maxStringLength){
+                                    infoString = s.filter { it != ',' }
+                                } else {
+                                    showLengthWarning = true
+                                }
                             }
                         )
-                        Switch(checked = enableHold, onCheckedChange = {enableHold = !enableHold},
-                            colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.secondary, checkedThumbColor = MaterialTheme.colorScheme.onSecondary))
-                        Text((showKeyDialogId!!+1).toString())
+                        if(infoStringId != showKeyDialogId!! + selectedPage*15){
+                            LinearProgressIndicator(Modifier.clip(CircleShape))
+                        }
+                        Switch(
+                            checked = enableHold, onCheckedChange = { enableHold = !enableHold },
+                            colors = SwitchDefaults.colors(
+                                checkedTrackColor = MaterialTheme.colorScheme.secondary,
+                                checkedThumbColor = MaterialTheme.colorScheme.onSecondary
+                            )
+                        )
+                        Text((showKeyDialogId!! + 1).toString())
                     }
 
                 },
                 confirmButton = {
-                    TextButton(onClick = { showKeyDialogId = null }) {
+                    TextButton(onClick = {
+                        Log.d("writeCharacteristic", "c,${showKeyDialogId},${infoString}")
+                        writeCharacteristic(configCharacteristic, "c,${showKeyDialogId!! + selectedPage*15},${infoString}")
+                        showKeyDialogId = null }) {
                         Text(stringResource(id = R.string.ok))
                     }
 
