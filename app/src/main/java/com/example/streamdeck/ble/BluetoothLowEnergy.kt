@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import com.example.streamdeck.MainActivity
 import com.example.streamdeck.connected
 import com.example.streamdeck.connecting
+import com.example.streamdeck.holdKey
 import com.example.streamdeck.infoString
 import com.example.streamdeck.infoStringId
 import com.example.streamdeck.scanning
@@ -302,14 +303,16 @@ fun characteristicChanged (characteristic: BluetoothGattCharacteristic, value: S
     when (characteristic) {
         configCharacteristic -> {
             if (value.startsWith("s")){
-                val first = value.indexOf(',')
-                val second = value.indexOf(',', first+1)
+                val divider1 = value.indexOf(',')
+                val divider2 = value.indexOf(',', divider1+1)
+                val divider3 = value.indexOf(',', divider2+1)
 
-                infoStringId =  value.substring(first+1, second).toInt()
-                infoString = value.substring(second+1, value.length)
+                infoStringId =  value.substring(divider1+1, divider2).toInt()
+                infoString = value.substring(divider2+1, divider3)
+                holdKey = value.substring(divider3+1, value.length)=="1"
                 Log.e("infoString", infoString)
                 Log.e("infoStringId", infoStringId.toString())
-
+                Log.e("holdKey", holdKey.toString())
             }
             Log.e("battery state", "$value%")
         }

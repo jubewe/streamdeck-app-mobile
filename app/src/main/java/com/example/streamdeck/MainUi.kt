@@ -58,6 +58,7 @@ var connecting by mutableStateOf(false)
 var showNotInConfigModeDialog by mutableStateOf(false)
 var infoString by mutableStateOf("---")
 var infoStringId by mutableIntStateOf(-1)
+var holdKey by mutableStateOf(false)
 
 @Composable
 fun MainUi() {
@@ -203,7 +204,6 @@ fun MainUi() {
         if (showKeyDialogId != null) {
             infoString = ""
             writeCharacteristic(configCharacteristic, "g,${showKeyDialogId!! + selectedPage*15}")
-            var enableHold by remember { mutableStateOf(false) }
             var showLengthWarning by remember {mutableStateOf(false)}
             val maxStringLength = 10
             AlertDialog(
@@ -213,7 +213,6 @@ fun MainUi() {
                 },
                 text = {
                     Column {
-
                         OutlinedTextField(value = infoString,
                             label = { Text(stringResource(id = R.string.title)) },
                             maxLines = 1,
@@ -229,7 +228,7 @@ fun MainUi() {
                             LinearProgressIndicator(Modifier.clip(CircleShape))
                         }
                         Switch(
-                            checked = enableHold, onCheckedChange = { enableHold = !enableHold },
+                            checked = holdKey, onCheckedChange = { holdKey = !holdKey },
                             colors = SwitchDefaults.colors(
                                 checkedTrackColor = MaterialTheme.colorScheme.secondary,
                                 checkedThumbColor = MaterialTheme.colorScheme.onSecondary
@@ -241,8 +240,8 @@ fun MainUi() {
                 },
                 confirmButton = {
                     TextButton(onClick = {
-                        Log.d("writeCharacteristic", "c,${showKeyDialogId},${infoString}")
-                        writeCharacteristic(configCharacteristic, "c,${showKeyDialogId!! + selectedPage*15},${infoString}")
+                        Log.d("writeCharacteristic", "c,${showKeyDialogId},${infoString},${if(holdKey){"1"}else{"0"}}")
+                        writeCharacteristic(configCharacteristic, "c,${showKeyDialogId!! + selectedPage*15},${infoString},${if(holdKey){"1"}else{"0"}}");
                         showKeyDialogId = null }) {
                         Text(stringResource(id = R.string.ok))
                     }
