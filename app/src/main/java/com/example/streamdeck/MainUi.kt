@@ -15,11 +15,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -60,6 +68,7 @@ var infoString by mutableStateOf("---")
 var infoStringId by mutableIntStateOf(-1)
 var holdKey by mutableStateOf(false)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainUi() {
     Column {
@@ -167,6 +176,18 @@ fun MainUi() {
                 }
             }
         }
+        var test by remember { mutableStateOf(false) }
+        FilterChip(selected = test, onClick = { test = !test }, label = {Text("filter") }, leadingIcon = {
+            if(test) {
+                Icon(
+                    Icons.Filled.Check,
+                    contentDescription = "Localized description",
+                    Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
+        },
+            colors = FilterChipDefaults.filterChipColors(disabledContainerColor = Color.Red))
+
 
         Divider(
             Modifier
@@ -205,7 +226,8 @@ fun MainUi() {
             infoString = ""
             writeCharacteristic(configCharacteristic, "g,${showKeyDialogId!! + selectedPage*15}")
             var showLengthWarning by remember {mutableStateOf(false)}
-            val maxStringLength = 10
+            val maxStringLength = 500
+            //var selectedTab by remember{mutableStateOf(0)}
             AlertDialog(
                 onDismissRequest = { showKeyDialogId = null },
                 title = {
@@ -224,6 +246,13 @@ fun MainUi() {
                                 }
                             }
                         )
+                        /*TabRow(selectedTabIndex = selectedTab, tabs = {
+                            for(tab in 0..<2){
+                                Tab(selectedTab == tab, onClick = {selectedTab = tab}){
+                                    Text(stringResource(id = R.string.tab_title, tab+1), Modifier.padding(vertical = 12.dp))
+                                }
+                            }
+                        })*/
                         if(infoStringId != showKeyDialogId!! + selectedPage*15){
                             LinearProgressIndicator(Modifier.clip(CircleShape))
                         }

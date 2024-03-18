@@ -58,14 +58,16 @@ var scanCallback = object : ScanCallback() {
 
 @SuppressLint("MissingPermission")
 fun startBLEScan() {
-    scanning = true
 
     Handler().postDelayed({ stopBLEScan() }, scanTimeout)
     MainScope().launch {
         val scanFilter = ScanFilter.Builder().build()
         val scanSettings =
             ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
-        bluetoothLeScanner.startScan(listOf(scanFilter), scanSettings, scanCallback)
+        if(::bluetoothLeScanner.isInitialized){
+            scanning = true
+            bluetoothLeScanner.startScan(listOf(scanFilter), scanSettings, scanCallback)
+        }
     }
 
 
@@ -75,6 +77,8 @@ fun startBLEScan() {
 fun stopBLEScan() {
     scanning = false
     MainScope().launch {
-        bluetoothLeScanner.stopScan(scanCallback)
+        if(::bluetoothLeScanner.isInitialized){
+            bluetoothLeScanner.stopScan(scanCallback)
+        }
     }
 }

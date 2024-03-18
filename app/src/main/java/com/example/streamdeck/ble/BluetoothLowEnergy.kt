@@ -34,6 +34,11 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+val characters = arrayOf(
+    'q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä', 'y', 'x', 'c', 'v', 'b', 'n', 'm',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    'ß', '<', '>', '.', ';', ':'
+)
 
 var configCharacteristic: BluetoothGattCharacteristic? = null
 
@@ -58,7 +63,6 @@ fun initBluetooth(context: Context){
 
     bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
     enableBluetooth(context)
-    bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
 }
 
 
@@ -72,6 +76,9 @@ fun enableBluetooth(context: Context){
             PermissionRequestCode,
             null
         )
+    }
+    else{
+        bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
     }
 }
 
@@ -166,13 +173,12 @@ val bluetoothGattCallback = object : BluetoothGattCallback() {
                 connected = true
                 connecting = false
             }
-
             bluetoothGatt?.discoverServices()
+            bluetoothGatt?.requestMtu(512)
 
             if(scanning){
                 stopBLEScan()
             }
-            bluetoothGatt?.requestMtu(512)
 
 
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -200,7 +206,7 @@ val bluetoothGattCallback = object : BluetoothGattCallback() {
         if (status == BluetoothGatt.GATT_SUCCESS) {
             Log.d("mtu changed", "success: $mtu")
         } else {
-            Log.d("mtu changed", "failed")
+            Log.e("mtu changed", "failed")
         }
     }
 
