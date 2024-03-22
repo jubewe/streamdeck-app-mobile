@@ -2,6 +2,8 @@ package com.example.streamdeck
 
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,10 +16,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -42,11 +50,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,6 +66,7 @@ import com.example.streamdeck.ble.disconnectDevice
 import com.example.streamdeck.ble.startBLEScan
 import com.example.streamdeck.ble.writeCharacteristic
 import com.example.streamdeck.ui.theme.StreamdeckTheme
+import kotlinx.coroutines.launch
 
 var showKeyDialogId: Int? by mutableStateOf(null)
 var selectedPage by mutableIntStateOf(0)
@@ -68,7 +79,7 @@ var infoString by mutableStateOf("---")
 var infoStringId by mutableIntStateOf(-1)
 var holdKey by mutableStateOf(false)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MainUi() {
     Column {
@@ -176,18 +187,6 @@ fun MainUi() {
                 }
             }
         }
-        var test by remember { mutableStateOf(false) }
-        FilterChip(selected = test, onClick = { test = !test }, label = {Text("filter") }, leadingIcon = {
-            if(test) {
-                Icon(
-                    Icons.Filled.Check,
-                    contentDescription = "Localized description",
-                    Modifier.size(FilterChipDefaults.IconSize)
-                )
-            }
-        },
-            colors = FilterChipDefaults.filterChipColors(disabledContainerColor = Color.Red))
-
 
         Divider(
             Modifier
@@ -229,6 +228,7 @@ fun MainUi() {
             val maxStringLength = 500
             //var selectedTab by remember{mutableStateOf(0)}
             AlertDialog(
+                modifier = Modifier.fillMaxHeight(0.8f),
                 onDismissRequest = { showKeyDialogId = null },
                 title = {
                     Text(stringResource(id = R.string.modify_key, showKeyDialogId!! + 1, selectedPage + 1))
@@ -237,7 +237,7 @@ fun MainUi() {
                     Column {
                         OutlinedTextField(value = infoString,
                             label = { Text(stringResource(id = R.string.title)) },
-                            maxLines = 1,
+                            singleLine = true,
                             onValueChange = { s ->
                                 if(s.length <= maxStringLength){
                                     infoString = s.filter { it != ',' }
@@ -246,24 +246,83 @@ fun MainUi() {
                                 }
                             }
                         )
-                        /*TabRow(selectedTabIndex = selectedTab, tabs = {
-                            for(tab in 0..<2){
-                                Tab(selectedTab == tab, onClick = {selectedTab = tab}){
-                                    Text(stringResource(id = R.string.tab_title, tab+1), Modifier.padding(vertical = 12.dp))
-                                }
-                            }
-                        })*/
                         if(infoStringId != showKeyDialogId!! + selectedPage*15){
-                            LinearProgressIndicator(Modifier.clip(CircleShape))
+                            LinearProgressIndicator(Modifier.clip(CircleShape).fillMaxWidth())
                         }
+                        /*
                         Switch(
                             checked = holdKey, onCheckedChange = { holdKey = !holdKey },
                             colors = SwitchDefaults.colors(
                                 checkedTrackColor = MaterialTheme.colorScheme.secondary,
                                 checkedThumbColor = MaterialTheme.colorScheme.onSecondary
                             )
-                        )
-                        Text((showKeyDialogId!! + 1).toString())
+                        )*/
+                        val pagerState = rememberPagerState(pageCount = {
+                            2
+                        })
+                        val coroutineScope = rememberCoroutineScope()
+                        Row(Modifier.fillMaxWidth().padding(start = 4.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Rounded.Info, null)
+                            Text(stringResource(id = R.string.info_combinations_clipboard))
+                        }
+
+                        TabRow(selectedTabIndex = pagerState.currentPage, tabs = {
+                            Tab(pagerState.currentPage == 0, modifier = Modifier.clip(
+                                RoundedCornerShape(12.dp)
+                            ), onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(0)
+                                }}){
+                                val selected = pagerState.currentPage == 0
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center){
+                                    if(selected){
+                                        Icon(Icons.Rounded.Check, null)
+                                    }
+                                    Text(stringResource(id = R.string.tab_custom),
+                                        Modifier.padding(vertical = 12.dp), color = if(selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondary)
+                                }
+                                 }
+                            Tab(pagerState.currentPage == 1, modifier = Modifier.clip(
+                                RoundedCornerShape(12.dp)
+                            )
+                                ,onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(1)
+                                }}) {
+                                val selected = pagerState.currentPage == 1
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+
+                                    if (selected) {
+                                        Icon(Icons.Rounded.Check, null)
+                                    }
+                                    Text(
+                                        stringResource(id = R.string.tab_clipboard),
+                                        Modifier.padding(vertical = 12.dp),
+                                        color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondary
+                                    )
+                                }
+                            }
+                        })
+
+                        HorizontalPager(state = pagerState, userScrollEnabled = true, beyondBoundsPageCount = 1, modifier = Modifier
+                            .padding(bottom = 0.dp, top = 8.dp)
+                        ) { page ->
+                                when(page){
+                                    0 -> {
+                                        KeyCombinationConfig()
+                                    }
+                                    1 -> {
+                                        ClipboardConfig()
+                                    }
+                                }
+                        }
+                        Divider(Modifier.fillMaxWidth(0.8f))
+
+
+
                     }
 
                 },
