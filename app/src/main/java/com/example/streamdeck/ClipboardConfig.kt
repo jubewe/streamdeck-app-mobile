@@ -32,7 +32,7 @@ fun ClipboardConfig() {
             textStyle = TextStyle(fontWeight = FontWeight.Normal, textAlign = TextAlign.Center, fontSize = 20.sp),
             value = clipboardString,
             onValueChange = {
-                if(it.length < 500) { //MTU limit
+                if(it.length < 490) { //MTU limit
                     clipboardString = it
                 }
             },

@@ -33,6 +33,7 @@ var scanCallback = object : ScanCallback() {
         if(device != null){
             if (device.name == "Streamdeck"){
                 showNotInConfigModeDialog = true
+                stopBLEScan()
             }
             if (device.name == "Streamdeck Configuration"){
                 connectToDevice(device)

@@ -19,19 +19,26 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.streamdeck.MainActivity
+import com.example.streamdeck.clipboardSelected
+import com.example.streamdeck.clipboardString
 import com.example.streamdeck.connected
 import com.example.streamdeck.connecting
 import com.example.streamdeck.holdKey
 import com.example.streamdeck.infoString
 import com.example.streamdeck.infoStringId
 import com.example.streamdeck.scanning
+import com.example.streamdeck.selectedCharKey
+import com.example.streamdeck.selectedKeysString
+import com.example.streamdeck.showMtuRequestErrorDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.UUID
 
 val characters = arrayOf(
@@ -43,7 +50,7 @@ val characters = arrayOf(
 var configCharacteristic: BluetoothGattCharacteristic? = null
 
 lateinit var genericService: BluetoothGattService
-
+lateinit var bleApplicationContext: Context
 val CharacteristicMap = mapOf(
     UUID.fromString("006f82e3-fafa-44d9-82ac-add23151a870") to ::configCharacteristic
 )
@@ -143,7 +150,7 @@ fun connectToDevice(device: BluetoothDevice): Boolean {
                 }
 
             }else{
-                bluetoothGatt = device.connectGatt(null, false, bluetoothGattCallback)
+                bluetoothGatt = device.connectGatt(bleApplicationContext, false, bluetoothGattCallback)
                 if(bluetoothGatt != null){
                     successful = true
                 }
@@ -166,6 +173,7 @@ val bluetoothGattCallback = object : BluetoothGattCallback() {
     @SuppressLint("MissingPermission")
     override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
         if (newState == BluetoothProfile.STATE_CONNECTED) {
+            //gatt?.requestMtu(100)
             // successfully connected to the GATT Server
             Log.e("connection", "successful")
 
@@ -173,8 +181,10 @@ val bluetoothGattCallback = object : BluetoothGattCallback() {
                 connected = true
                 connecting = false
             }
+            //val res = bluetoothGatt?.requestMtu(100)
+            //Log.e("res", res.toString())
+
             bluetoothGatt?.discoverServices()
-            bluetoothGatt?.requestMtu(512)
 
             if(scanning){
                 stopBLEScan()
@@ -202,11 +212,14 @@ val bluetoothGattCallback = object : BluetoothGattCallback() {
         }
     }
 
+    @SuppressLint("MissingPermission")
     override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
         if (status == BluetoothGatt.GATT_SUCCESS) {
             Log.d("mtu changed", "success: $mtu")
         } else {
             Log.e("mtu changed", "failed")
+            showMtuRequestErrorDialog = true
+            disconnectDevice()
         }
     }
 
@@ -308,17 +321,51 @@ val bluetoothGattCallback = object : BluetoothGattCallback() {
 fun characteristicChanged (characteristic: BluetoothGattCharacteristic, value: String){
     when (characteristic) {
         configCharacteristic -> {
-            if (value.startsWith("s")){
+            if (value.startsWith("s,")){
+                //writeCharacteristic(configCharacteristic, "s," + id + "," + value + ",{{"+ config + "}}," + String(clipboard));
                 val divider1 = value.indexOf(',')
                 val divider2 = value.indexOf(',', divider1+1)
-                val divider3 = value.indexOf(',', divider2+1)
+                val divider3 = value.indexOf(",{{", divider2+1)
+                val divider4 = value.indexOf("}},", divider3+1)
 
-                infoStringId =  value.substring(divider1+1, divider2).toInt()
-                infoString = value.substring(divider2+1, divider3)
-                holdKey = value.substring(divider3+1, value.length)=="1"
-                Log.e("infoString", infoString)
+                infoStringId = value.substring(divider1+1, divider2).toInt()
                 Log.e("infoStringId", infoStringId.toString())
-                Log.e("holdKey", holdKey.toString())
+                infoString = value.substring(divider2+1, divider3)
+                Log.e("infoString", infoString)
+                runBlocking {
+                    launch(Dispatchers.Main) { // Launches a coroutine on the main thread
+                        clipboardSelected = value.substring(divider4+3, value.length)=="1"
+                        println("Coroutine running on the main thread")
+                    }
+                }
+                Log.e("clipboard", clipboardSelected.toString())
+                Log.e("divider 4", divider4.toString())
+                val config = value.substring(divider3+3, divider4)
+                Log.e("config", config)
+                if(clipboardSelected){
+                    clipboardString = value.substring(divider3+3, divider4)
+                    selectedKeysString = ""
+                    selectedCharKey = null
+                }else{
+                    if(config.isNotEmpty()) {
+                        val lastPart =
+                            config.substring(config.indexOfLast { it == '+' } + 1, config.length)
+                        if (!lastPart.contains("KEY_")) {
+                            selectedKeysString =
+                                config.substring(0, config.indexOfLast { it == '+' })
+                            selectedCharKey = lastPart[0]
+                        } else {
+                            selectedKeysString = config
+                            selectedCharKey = null
+                        }
+                    }else{
+                        selectedKeysString = ""
+                        selectedCharKey = null
+                    }
+                    clipboardString = ""
+                }
+                Log.e("selectedKeys", selectedKeysString)
+                Log.e("selectedChar", selectedCharKey.toString())
             }
             Log.e("battery state", "$value%")
         }
@@ -399,6 +446,7 @@ fun enableNotifications() {
     } else {
         currentCharacteristicIndex = 0
         Log.d("notifications", "enabled all")
+        bluetoothGatt?.requestMtu(517)
     }
 }
 

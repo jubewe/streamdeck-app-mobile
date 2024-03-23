@@ -5,7 +5,7 @@
     <string name="not_in_config_mode_desc">Sicherstellen, dass das Gerät im \"configuration mode\" ist (drücken des rechten Encoders beim Anschalten)!</string>
     <string name="ok">ok</string>
     <string name="modify_key">Taste %s anpassen (Page %s)</string>
-    <string name="search">Nach Geräten Suchen</string>
+    <string name="search">Nach Gerät Suchen</string>
     <string name="connected">Verbunden</string>
     <string name="not_connected">Nicht verbunden</string>
     <string name="tab_title">Page %s</string>
@@ -83,4 +83,5 @@
     <string name="numpad_keys">NumPad Tasten:</string>
     <string name="character_key">Buchstabe</string>
     <string name="info_combinations_clipboard">Tastenkombinationen und die Zwischenablage können NICHT gleichzeitig genutzt werden!</string>
+    <string name="modify_encoder">Encoder %s anpassen (Page %s)</string>
 </resources>

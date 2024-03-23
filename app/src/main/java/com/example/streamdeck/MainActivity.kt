@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.streamdeck.ble.PermissionRequestCode
+import com.example.streamdeck.ble.bleApplicationContext
 import com.example.streamdeck.ble.initBluetooth
 import com.example.streamdeck.ble.requestPermissions
 import com.example.streamdeck.ble.startBLEScan
@@ -25,6 +26,7 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        bleApplicationContext = applicationContext
         setContent {
             StreamdeckTheme {
                 // A surface container using the 'background' color from the theme

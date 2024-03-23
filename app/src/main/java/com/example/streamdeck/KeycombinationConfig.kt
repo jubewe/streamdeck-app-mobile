@@ -1,5 +1,6 @@
 package com.example.streamdeck
 
+import android.os.Handler
 import android.util.Log
 import android.widget.EditText
 import androidx.compose.animation.AnimatedContent
@@ -57,6 +58,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.streamdeck.ble.scanTimeout
+import com.example.streamdeck.ble.stopBLEScan
 
 val modifierKeys = listOf(
     Pair("KEY_LEFT_CTRL", R.string.key_ctrl_left),
@@ -130,6 +133,7 @@ val numPadKeys = listOf(
 
 var selectedKeysString by mutableStateOf("")
 var selectedCharKey by mutableStateOf<Char?>(null)
+var clipboardSelected by mutableStateOf(false)
 
 data class KeyType (val list: List<Pair<String, Int>>, val titleId: Int, val span: Int)
 
@@ -142,6 +146,7 @@ var keyTypes = listOf(
 var keyTypeExpanded by mutableStateOf<Int?>(0)
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KeyCombinationConfig() {
     LazyVerticalGrid(
@@ -155,14 +160,16 @@ fun KeyCombinationConfig() {
                 var itemSelected by remember { mutableStateOf(false) }
                 LaunchedEffect(selectedKeysString) {
                     itemSelected = false
-                    selectedKeysString.split(',').forEach() {
+                    Handler().postDelayed({
+                    selectedKeysString.split('+').forEach() {
                         keyType.list.forEach { (key, stringId) ->
-                            if(key == it.removeSurrounding(",")){
+                            if(key == it.removeSurrounding("+")){
                                 itemSelected = true
                             }
                         }
-                    }
-                }
+                    }}, 1000)
+
+            }
 
                 KeyHeader(title = stringResource(id = keyType.titleId), itemSelected, isExpanded = keyTypeExpanded == index) {
                     keyTypeExpanded = if(keyTypeExpanded == index){
@@ -174,19 +181,57 @@ fun KeyCombinationConfig() {
             }
             keyType.list.forEach { (key, stringId) ->
                 item (span = { GridItemSpan(keyType.span) }){
-                    var selected by mutableStateOf(false)
-                    selectedKeysString.split(',').forEach() {
-                        if(key == it.removeSurrounding(",")){
-                            selected = true
-                            Log.d(key, selected.toString())
-                        }
+                    var selected by remember {
+                        mutableStateOf(false)
                     }
+                    LaunchedEffect(selectedKeysString){
+                        selected = false
+                            selectedKeysString.split('+').forEach() {
+                                if (key == it.removeSurrounding("+")) {
+                                    selected = true
+                                    Log.d(key, selected.toString())
+                                }
+                            }
+                    }
+
 
                     AnimatedVisibility(keyTypeExpanded == index, label = "",
                         enter = fadeIn(),
                         exit = fadeOut(),
                         ) {
-                            KeyFilterChip(key, stringId, selected)
+                        Log.e("test: "+key, selected.toString())
+                        FilterChip(selected, modifier = Modifier.padding(horizontal = 2.dp),
+                            onClick = {
+                                selected = !selected
+                                if (selected) {
+                                    selectedKeysString += "${if (selectedKeysString.isNotEmpty() && selectedKeysString[selectedKeysString.lastIndex] != '+') "+" else ""}$key+"
+                                } else {
+                                    selectedKeysString = selectedKeysString.replace("$key+", "")
+                                }
+                                Log.d("selectedKeys", selectedKeysString)
+                            }, label = { Text(stringResource(id = stringId), textAlign = TextAlign.Center, modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = if (!selected) 8.dp else 0.dp)) },
+                            leadingIcon = {
+                                if (selected) {
+                                    Icon(
+                                        imageVector =
+                                        Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        Modifier.size(FilterChipDefaults.IconSize)
+                                    )
+                                }
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.primary,
+                                selectedLeadingIconColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+
+                            //KeyFilterChip(key, stringId, selected) {
+
+                            //}
                     }
                 }
             }
@@ -271,16 +316,12 @@ fun KeyHeader(title: String, itemSelected: Boolean, isExpanded: Boolean, onHeade
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun KeyFilterChip(key: String, stringId: Int, isSelected: Boolean) {
-    var selected by remember { mutableStateOf(isSelected) }
+fun KeyFilterChip(key: String, stringId: Int, initialState: Boolean, onClick: () -> Unit) {
+    var selected by remember { mutableStateOf(initialState) }
     FilterChip(selected, modifier = Modifier.padding(horizontal = 2.dp),
         onClick = {
             selected = !selected
-            if (selected) {
-                selectedKeysString += "$key,"
-            } else {
-                selectedKeysString = selectedKeysString.replace("$key,", "")
-            }
+            onClick()
             Log.d("selectedKeys", selectedKeysString)
         }, label = { Text(stringResource(id = stringId), textAlign = TextAlign.Center, modifier = Modifier
             .fillMaxWidth()

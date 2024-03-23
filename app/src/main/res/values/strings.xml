@@ -82,4 +82,5 @@
     <string name="numpad_keys">NumPad Keys</string>
     <string name="character_key">Character Key</string>
     <string name="info_combinations_clipboard">Custom key combinations and the clipboard function can NOT be used at the same time!</string>
+    <string name="modify_encoder">Modifiy Encoder %s properties (Page %s)</string>
 </resources>
