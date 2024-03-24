@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Streamdeck</string>
     <string name="not_in_config_mode_title">Falscher Modus</string>
-    <string name="not_in_config_mode_desc">Sicherstellen, dass das Gerät im \"configuration mode\" ist (drücken des rechten Encoders beim Anschalten)!</string>
+    <string name="not_in_config_mode_desc">Sicherstellen, dass das Gerät im \"configuration mode\" ist (drücken eines Encoders beim Anschalten)!</string>
     <string name="ok">ok</string>
     <string name="modify_key">Taste %s anpassen (Page %s)</string>
     <string name="search">Nach Gerät Suchen</string>

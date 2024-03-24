@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Streamdeck</string>
     <string name="not_in_config_mode_title">Wrong Mode</string>
-    <string name="not_in_config_mode_desc">Please make sure the device is in \"configuration mode\" by holding down the right encoder while powering it up!</string>
+    <string name="not_in_config_mode_desc">Please make sure the device is in \"configuration mode\" by holding down one of the encoders while powering it up!</string>
     <string name="ok">ok</string>
     <string name="modify_key">Modifiy key %s properties (Page %s)</string>
     <string name="search">Search for device</string>
