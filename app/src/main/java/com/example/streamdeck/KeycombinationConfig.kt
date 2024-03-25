@@ -70,6 +70,23 @@ val modifierKeys = listOf(
     Pair("KEY_RIGHT_ALT", R.string.key_right_alt),
     Pair("KEY_LEFT_GUI", R.string.key_left_gui),
     Pair("KEY_RIGHT_GUI", R.string.key_right_gui))
+val mediaKeys = listOf(
+    Pair("KEY_MEDIA_NEXT_TRACK", R.string.key_media_next_track),
+    Pair("KEY_MEDIA_PREVIOUS_TRACK", R.string.key_media_previous_track),
+    Pair("KEY_MEDIA_STOP", R.string.key_media_stop),
+    Pair("KEY_MEDIA_PLAY_PAUSE", R.string.key_media_play_pause),
+    Pair("KEY_MEDIA_MUTE", R.string.key_media_mute),
+    Pair("KEY_MEDIA_VOLUME_UP", R.string.key_media_volume_up),
+    Pair("KEY_MEDIA_VOLUME_DOWN", R.string.key_media_volume_down),
+    Pair("KEY_MEDIA_WWW_HOME", R.string.key_media_www_home),
+    Pair("KEY_MEDIA_LOCAL_MACHINE_BROWSER", R.string.key_media_local_machine_browser),
+    Pair("KEY_MEDIA_CALCULATOR", R.string.key_media_calculator),
+    Pair("KEY_MEDIA_WWW_BOOKMARKS", R.string.key_media_www_bookmarks),
+    Pair("KEY_MEDIA_WWW_SEARCH", R.string.key_media_www_search),
+    Pair("KEY_MEDIA_WWW_STOP", R.string.key_media_www_stop),
+    Pair("KEY_MEDIA_WWW_BACK", R.string.key_media_www_back),
+    Pair("KEY_MEDIA_CONSUMER_CONTROL_CONFIGURATION", R.string.key_media_consumer_control_configuration),
+    Pair("KEY_MEDIA_EMAIL_READER", R.string.key_media_email_reader))
 val otherKeys = listOf(
     Pair("KEY_UP_ARROW", R.string.key_up_arrow),
     Pair("KEY_DOWN_ARROW", R.string.key_down_arrow),
@@ -139,6 +156,7 @@ data class KeyType (val list: List<Pair<String, Int>>, val titleId: Int, val spa
 
 var keyTypes = listOf(
     KeyType(modifierKeys, R.string.modifier_keys, 2),
+    KeyType(mediaKeys, R.string.media_keys, 2),
     KeyType(otherKeys, R.string.other_keys, 2),
     KeyType(functionKeys, R.string.function_keys, 1),
     KeyType(numPadKeys, R.string.numpad_keys, 1)
@@ -168,7 +186,6 @@ fun KeyCombinationConfig() {
                             }
                         }
                     }}, 1000)
-
             }
 
                 KeyHeader(title = stringResource(id = keyType.titleId), itemSelected, isExpanded = keyTypeExpanded == index) {
@@ -186,12 +203,12 @@ fun KeyCombinationConfig() {
                     }
                     LaunchedEffect(selectedKeysString){
                         selected = false
-                            selectedKeysString.split('+').forEach() {
-                                if (key == it.removeSurrounding("+")) {
-                                    selected = true
-                                    Log.d(key, selected.toString())
-                                }
-                            }
+                        selectedKeysString.split('+').forEach() {
+                           if (key == it.removeSurrounding("+")) {
+                                 selected = true
+                                 Log.d(key, selected.toString())
+                           }
+                        }
                     }
 
 
