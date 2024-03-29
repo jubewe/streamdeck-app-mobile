@@ -84,14 +84,9 @@
     <string name="key_media_mute">Stumm</string>
     <string name="key_media_volume_up">Lautstärke erhöhen</string>
     <string name="key_media_volume_down">Lautstärke verringern</string>
-    <string name="key_media_www_home">WWW Startseite</string>
     <string name="key_media_local_machine_browser">Dateimanager</string>
     <string name="key_media_calculator">Taschenrechner</string>
-    <string name="key_media_www_bookmarks">WWW Lesezeichen</string>
-    <string name="key_media_www_search">WWW Suche</string>
-    <string name="key_media_www_stop">WWW Stop</string>
-    <string name="key_media_www_back">WWW Zurück</string>
-    <string name="key_media_consumer_control_configuration">Medieneinstellungen</string>
+    <string name="key_media_consumer_control_configuration">Einstellungen</string>
     <string name="key_media_email_reader">E-Mail-Reader</string>
 
     <string name="modifier_keys">Kombinationstasten:</string>
@@ -101,5 +96,5 @@
     <string name="numpad_keys">NumPad Tasten:</string>
     <string name="character_key">Buchstabe</string>
     <string name="info_combinations_clipboard">Tastenkombinationen und die Zwischenablage können NICHT gleichzeitig genutzt werden!</string>
-    <string name="modify_encoder">Encoder %s anpassen (Page %s)</string>
+    <string name="modify_encoder">Encoder %s anpassen</string>
 </resources>

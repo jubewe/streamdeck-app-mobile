@@ -42,12 +42,12 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EncoderDialog() {
-    writeCharacteristic(configCharacteristic, "g,${showEncoderDialogId!! + selectedPage*15}")
+    writeCharacteristic(configCharacteristic, "g,${-showEncoderDialogId!!}")
     AlertDialog(
         modifier = Modifier.fillMaxHeight(0.8f),
         onDismissRequest = { showEncoderDialogId = null },
         title = {
-            Text(stringResource(id = R.string.modify_encoder, showEncoderDialogId!!         , selectedPage + 1))
+            Text(stringResource(id = R.string.modify_encoder, showEncoderDialogId!!))
         },
         text = {
             val pagerState = rememberPagerState(pageCount = {
@@ -111,7 +111,7 @@ fun EncoderDialog() {
                 HorizontalPager(state = pagerState, userScrollEnabled = true, beyondBoundsPageCount = 1, modifier = Modifier
                     .padding(bottom = 0.dp, top = 8.dp)
                 ) { page ->
-                        KeyCombinationConfig()
+                    KeyCombinationConfigEncoder(page)
 
                 }
 
@@ -119,9 +119,18 @@ fun EncoderDialog() {
         },
         confirmButton = {
             TextButton(onClick = {
-                Log.d("writeCharacteristic", "c,${showKeyDialogId},${infoString},${if(holdKey){"1"}else{"0"}}")
-                writeCharacteristic(configCharacteristic, "c,${showKeyDialogId!! + selectedPage*15},${infoString},${if(holdKey){"1"}else{"0"}}");
-                showKeyDialogId = null }) {
+                val value =
+                    selectedKeysStringEncoder.removeSuffix("+")+
+                            if(selectedCharKeyEncoder != null){
+                                "+$selectedCharKeyEncoder"
+                            } else {
+                                ""
+                            }
+                val id = if(showEncoderDialogId != null) (-showEncoderDialogId!!).toString() else ""
+                val string = "c,${id},${infoString},{{${value}}},${"0"}"
+                Log.d("writeCharacteristic", string)
+                writeCharacteristic(configCharacteristic, string)
+                showEncoderDialogId = null }) {
                 Text(stringResource(id = R.string.ok))
             }
 

@@ -73,18 +73,13 @@ val modifierKeys = listOf(
 val mediaKeys = listOf(
     Pair("KEY_MEDIA_NEXT_TRACK", R.string.key_media_next_track),
     Pair("KEY_MEDIA_PREVIOUS_TRACK", R.string.key_media_previous_track),
-    Pair("KEY_MEDIA_STOP", R.string.key_media_stop),
+//    Pair("KEY_MEDIA_STOP", R.string.key_media_stop),
     Pair("KEY_MEDIA_PLAY_PAUSE", R.string.key_media_play_pause),
     Pair("KEY_MEDIA_MUTE", R.string.key_media_mute),
     Pair("KEY_MEDIA_VOLUME_UP", R.string.key_media_volume_up),
     Pair("KEY_MEDIA_VOLUME_DOWN", R.string.key_media_volume_down),
-    Pair("KEY_MEDIA_WWW_HOME", R.string.key_media_www_home),
     Pair("KEY_MEDIA_LOCAL_MACHINE_BROWSER", R.string.key_media_local_machine_browser),
     Pair("KEY_MEDIA_CALCULATOR", R.string.key_media_calculator),
-    Pair("KEY_MEDIA_WWW_BOOKMARKS", R.string.key_media_www_bookmarks),
-    Pair("KEY_MEDIA_WWW_SEARCH", R.string.key_media_www_search),
-    Pair("KEY_MEDIA_WWW_STOP", R.string.key_media_www_stop),
-    Pair("KEY_MEDIA_WWW_BACK", R.string.key_media_www_back),
     Pair("KEY_MEDIA_CONSUMER_CONTROL_CONFIGURATION", R.string.key_media_consumer_control_configuration),
     Pair("KEY_MEDIA_EMAIL_READER", R.string.key_media_email_reader))
 val otherKeys = listOf(
@@ -151,11 +146,19 @@ val numPadKeys = listOf(
 var selectedKeysString by mutableStateOf("")
 var selectedCharKey by mutableStateOf<Char?>(null)
 var clipboardSelected by mutableStateOf(false)
+var selectedKeysStringEncoder by mutableStateOf("")
+var selectedCharKeyEncoder by mutableStateOf<Char?>(null)
 
 data class KeyType (val list: List<Pair<String, Int>>, val titleId: Int, val span: Int)
 
 var keyTypes = listOf(
     KeyType(modifierKeys, R.string.modifier_keys, 2),
+    KeyType(mediaKeys, R.string.media_keys, 2),
+    KeyType(otherKeys, R.string.other_keys, 2),
+    KeyType(functionKeys, R.string.function_keys, 1),
+    KeyType(numPadKeys, R.string.numpad_keys, 1)
+)
+var keyTypesEncoder = listOf(
     KeyType(mediaKeys, R.string.media_keys, 2),
     KeyType(otherKeys, R.string.other_keys, 2),
     KeyType(functionKeys, R.string.function_keys, 1),
@@ -331,32 +334,158 @@ fun KeyHeader(title: String, itemSelected: Boolean, isExpanded: Boolean, onHeade
     }
 }
 
+
+fun modifyEncoderKeysString(mode: Int, keyString: String){
+    var newString = ""
+    if(selectedKeysStringEncoder.indexOfLast{ it == '+' }==-1){
+        selectedKeysStringEncoder = " + + "
+    }
+    selectedKeysStringEncoder.split('+').forEachIndexed { index, oldKeyString ->
+        newString = if(mode == index){
+            keyString
+        }else{
+            oldKeyString
+        } + "+"
+    }
+    selectedKeysStringEncoder = newString.removeSuffix("+")
+    Log.e("modified", selectedKeysStringEncoder)
+}
+
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun KeyFilterChip(key: String, stringId: Int, initialState: Boolean, onClick: () -> Unit) {
-    var selected by remember { mutableStateOf(initialState) }
-    FilterChip(selected, modifier = Modifier.padding(horizontal = 2.dp),
-        onClick = {
-            selected = !selected
-            onClick()
-            Log.d("selectedKeys", selectedKeysString)
-        }, label = { Text(stringResource(id = stringId), textAlign = TextAlign.Center, modifier = Modifier
-            .fillMaxWidth()
-            .padding(end = if (!selected) 8.dp else 0.dp)) },
-        leadingIcon = {
-            if (selected) {
-                Icon(
-                    imageVector =
-                    Icons.Rounded.Check,
-                    contentDescription = null,
-                    Modifier.size(FilterChipDefaults.IconSize)
-                )
+fun KeyCombinationConfigEncoder(mode: Int) {
+    //modes: 0 -> cw, 1 -> ccw, 2 -> press
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 64.dp),
+        modifier = Modifier
+            .fillMaxSize()
+    ){
+        keyTypesEncoder.forEachIndexed(){
+                index, keyType->
+            item(span = { GridItemSpan(maxCurrentLineSpan) }){
+                var itemSelected by remember { mutableStateOf(false) }
+                LaunchedEffect(selectedKeysStringEncoder) {
+                    itemSelected = false
+                    Handler().postDelayed({
+                        selectedKeysStringEncoder.split('+').forEachIndexed() { index, it->
+                            if(index == mode) {
+                                keyType.list.forEach { (key, stringId) ->
+                                    if (key == it.removeSurrounding("+")) {
+                                        itemSelected = true
+                                    }
+                                }
+                            }
+                        }}, 1000)
+
+                }
+
+                KeyHeader(title = stringResource(id = keyType.titleId), itemSelected, isExpanded = keyTypeExpanded == index) {
+                    keyTypeExpanded = if(keyTypeExpanded == index){
+                        null
+                    }else{
+                        index
+                    }
+                }
             }
-        },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.primary,
-            selectedLeadingIconColor = MaterialTheme.colorScheme.primary
-        )
-    )
+            keyType.list.forEach { (key, stringId) ->
+                item (span = { GridItemSpan(keyType.span) }){
+                    var selected by remember {
+                        mutableStateOf(false)
+                    }
+                    LaunchedEffect(selectedKeysStringEncoder){
+                        selected = false
+                        selectedKeysStringEncoder.split('+').forEach() {
+                            if (key == it.removeSurrounding("+")) {
+                                selected = true
+                                Log.d(key, selected.toString())
+                            }
+                        }
+                    }
+
+
+                    AnimatedVisibility(keyTypeExpanded == index, label = "",
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Log.e("test: "+key, selected.toString())
+                        FilterChip(selected, modifier = Modifier.padding(horizontal = 2.dp),
+                            onClick = {
+                                selected = !selected
+                                modifyEncoderKeysString(mode, if(selected) key else "")
+                                Log.d("selectedKeys", selectedKeysStringEncoder)
+                            }, label = { Text(stringResource(id = stringId), textAlign = TextAlign.Center, modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = if (!selected) 8.dp else 0.dp)) },
+                            leadingIcon = {
+                                if (selected) {
+                                    Icon(
+                                        imageVector =
+                                        Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        Modifier.size(FilterChipDefaults.IconSize)
+                                    )
+                                }
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.primary,
+                                selectedLeadingIconColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+
+                        //KeyFilterChip(key, stringId, selected) {
+
+                        //}
+                    }
+                }
+            }
+        }
+
+        item(span = { GridItemSpan(maxCurrentLineSpan) }){
+            val index = keyTypes.size+1
+            KeyHeader(title = stringResource(id = R.string.character_key), selectedCharKeyEncoder != null, isExpanded = keyTypeExpanded == index) {
+                keyTypeExpanded = if(keyTypeExpanded == index){
+                    null
+                }else{
+                    index
+                }
+            }
+        }
+        item (span = { GridItemSpan(maxCurrentLineSpan) }){
+            AnimatedVisibility(keyTypeExpanded == keyTypes.size+1, label = "",
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Absolute.SpaceEvenly) {
+                    OutlinedTextField(
+                        modifier = Modifier.width(50.dp),
+                        textStyle = TextStyle(fontWeight = FontWeight.Normal, textAlign = TextAlign.Center, fontSize = 20.sp),
+                        value = if (selectedCharKeyEncoder != null) selectedCharKeyEncoder else {
+                            ""
+                        }.toString(),
+                        onValueChange = {
+                            selectedCharKeyEncoder = try {
+                                it.toCharArray()[it.length - 1]
+                            } catch (e: ArrayIndexOutOfBoundsException) {
+                                null
+                            }
+                        },
+                        singleLine = true,
+                    )
+                    OutlinedButton(modifier = Modifier
+                        .width(128.dp)
+                        .padding(start = 8.dp),
+                        onClick = { selectedCharKeyEncoder = null },
+                        enabled = selectedCharKeyEncoder != null) {
+                        Text(stringResource(id = androidx.constraintlayout.widget.R.string.abc_menu_delete_shortcut_label))
+                    }
+                }
+            }
+        }
+
+
+
+    }
 }
