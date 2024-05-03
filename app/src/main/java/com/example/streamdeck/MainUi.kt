@@ -72,6 +72,7 @@ import kotlinx.coroutines.launch
 
 var showKeyDialogId: Int? by mutableStateOf(null)
 var showEncoderDialogId: Int? by mutableStateOf(null)
+var encoderSelectedOption: String? by mutableStateOf("L")
 var selectedPage by mutableIntStateOf(0)
 const val supportedPages = 3
 var connected by mutableStateOf(false)
@@ -80,7 +81,7 @@ var connecting by mutableStateOf(false)
 var showNotInConfigModeDialog by mutableStateOf(false)
 var showMtuRequestErrorDialog by mutableStateOf(false)
 var infoString by mutableStateOf("---")
-var infoStringId by mutableIntStateOf(-1)
+var infoStringId by mutableStateOf("-1")
 var holdKey by mutableStateOf(false)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)

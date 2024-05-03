@@ -42,10 +42,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EncoderDialog() {
-    writeCharacteristic(configCharacteristic, "g,${-showEncoderDialogId!!}")
+    selectedKeysStringEncoder = "";
     AlertDialog(
         modifier = Modifier.fillMaxHeight(0.8f),
-        onDismissRequest = { showEncoderDialogId = null },
+        onDismissRequest = { showEncoderDialogId = null; encoderSelectedOption = null },
         title = {
             Text(stringResource(id = R.string.modify_encoder, showEncoderDialogId!!))
         },
@@ -62,8 +62,14 @@ fun EncoderDialog() {
                     ), onClick = {
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(0)
-                        }}){
+                        }
+                    }){
                         val selected = pagerState.currentPage == 0
+                        if(selected) {
+                            encoderSelectedOption = "L"
+                            loadEncoderDialogData()
+                        }
+
                         Icon(
                             painter = painterResource(id = R.drawable.round_rotate_left_24),
                             contentDescription = null,
@@ -77,8 +83,13 @@ fun EncoderDialog() {
                         ,onClick = {
                             coroutineScope.launch {
                                 pagerState.animateScrollToPage(1)
-                            }}) {
+                            }
+                        }) {
                         val selected = pagerState.currentPage == 1
+                        if(selected) {
+                            encoderSelectedOption = "R"
+                            loadEncoderDialogData()
+                        }
 
                             Icon(
                                 painter = painterResource(id = R.drawable.round_rotate_right_24),
@@ -95,8 +106,13 @@ fun EncoderDialog() {
                         ,onClick = {
                             coroutineScope.launch {
                                 pagerState.animateScrollToPage(2)
-                            }}) {
+                            }
+                        }) {
                         val selected = pagerState.currentPage == 2
+                        if(selected) {
+                            encoderSelectedOption = "P"
+                            loadEncoderDialogData();
+                        }
 
                         Icon(
                             painter = painterResource(id = R.drawable.round_keyboard_double_arrow_down_24),
@@ -126,13 +142,20 @@ fun EncoderDialog() {
                             } else {
                                 ""
                             }
-                val id = if(showEncoderDialogId != null) (-showEncoderDialogId!!).toString() else ""
+                val id = if(showEncoderDialogId != null) "-$showEncoderDialogId$encoderSelectedOption" else ""
                 val string = "c,${id},${infoString},{{${value}}},${"0"}"
                 Log.d("writeCharacteristic", string)
                 writeCharacteristic(configCharacteristic, string)
-                showEncoderDialogId = null }) {
+                showEncoderDialogId = null
+                //encoderSelectedOption = null
+            }) {
                 Text(stringResource(id = R.string.ok))
             }
 
         })
+}
+
+fun loadEncoderDialogData(){
+    selectedKeysStringEncoder = "";
+    writeCharacteristic(configCharacteristic, "g,-${showEncoderDialogId!!}${encoderSelectedOption!!}")
 }

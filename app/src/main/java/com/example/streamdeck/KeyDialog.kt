@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun KeyDialog() {
     infoString = ""
+    selectedKeysString = ""
     writeCharacteristic(configCharacteristic, "g,${showKeyDialogId!! + selectedPage*15}")
     var showLengthWarning by remember { mutableStateOf(false) }
     val maxStringLength = 490
@@ -69,7 +70,7 @@ fun KeyDialog() {
                         }
                     }
                 )
-                if(infoStringId != showKeyDialogId!! + selectedPage*15){
+                if(infoStringId != (showKeyDialogId!! + selectedPage*15).toString()){
                     LinearProgressIndicator(
                         Modifier
                             .clip(CircleShape)
@@ -157,9 +158,6 @@ fun KeyDialog() {
                     }
                 }
                 Divider(Modifier.fillMaxWidth(0.8f))
-
-
-
             }
 
         },
@@ -176,7 +174,7 @@ fun KeyDialog() {
                             ""
                         }
                     }
-                val id = if(showKeyDialogId != null) showKeyDialogId!! + selectedPage*15 else if (showEncoderDialogId != null) showEncoderDialogId else ""
+                val id = if(showKeyDialogId != null) showKeyDialogId!! + selectedPage*15 else if (showEncoderDialogId != null) "$showEncoderDialogId$encoderSelectedOption" else ""
                 val string = "c,${id},${infoString},{{${value}}},${if(clipboardSelected){"1"}else{"0"}}"
                 Log.d("writeCharacteristic", string)
                 writeCharacteristic(configCharacteristic, string)

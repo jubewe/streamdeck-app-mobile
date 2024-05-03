@@ -413,7 +413,11 @@ fun KeyCombinationConfigEncoder(mode: Int) {
                         FilterChip(selected, modifier = Modifier.padding(horizontal = 2.dp),
                             onClick = {
                                 selected = !selected
-                                modifyEncoderKeysString(mode, if(selected) key else "")
+                                if (selected) {
+                                    selectedKeysStringEncoder += "${if (selectedKeysStringEncoder.isNotEmpty() && selectedKeysStringEncoder[selectedKeysStringEncoder.lastIndex] != '+') "+" else ""}$key+"
+                                } else {
+                                    selectedKeysStringEncoder = selectedKeysStringEncoder.replace("$key+", "")
+                                }
                                 Log.d("selectedKeys", selectedKeysStringEncoder)
                             }, label = { Text(stringResource(id = stringId), textAlign = TextAlign.Center, modifier = Modifier
                                 .fillMaxWidth()

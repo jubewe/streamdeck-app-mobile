@@ -33,6 +33,7 @@ import com.example.streamdeck.infoStringId
 import com.example.streamdeck.scanning
 import com.example.streamdeck.selectedCharKey
 import com.example.streamdeck.selectedKeysString
+import com.example.streamdeck.selectedKeysStringEncoder
 import com.example.streamdeck.showMtuRequestErrorDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -328,7 +329,7 @@ fun characteristicChanged (characteristic: BluetoothGattCharacteristic, value: S
                 val divider3 = value.indexOf(",{{", divider2+1)
                 val divider4 = value.indexOf("}},", divider3+1)
 
-                infoStringId = value.substring(divider1+1, divider2).toInt()
+                infoStringId = value.substring(divider1+1, divider2).toString()
                 Log.e("infoStringId", infoStringId.toString())
                 infoString = value.substring(divider2+1, divider3)
                 Log.e("infoString", infoString)
@@ -362,6 +363,8 @@ fun characteristicChanged (characteristic: BluetoothGattCharacteristic, value: S
                         selectedKeysString = ""
                         selectedCharKey = null
                     }
+
+                    selectedKeysStringEncoder = selectedKeysString;
                     clipboardString = ""
                 }
                 Log.e("selectedKeys", selectedKeysString)
